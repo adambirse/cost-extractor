@@ -1,15 +1,48 @@
 plugins {
     id 'java'
+    id "maven-publish"
+    id "com.jfrog.bintray" version "1.7.3"
 }
 
+apply plugin: 'maven-publish'
+apply plugin: 'java'
+
 group 'com.birse'
-version '1.0-SNAPSHOT'
+version = '1.0'
 
 sourceCompatibility = 1.8
 
 repositories {
     mavenCentral()
+    jcenter()
 }
+
+bintray {
+
+    user = System.getProperty('bintray.user')
+    key = System.getProperty('bintray.key')
+    publications = ['MyPublication']
+    publish = true
+    pkg {
+        repo = 'cost-extractor'
+        name = 'cost-extractor'
+        licenses = ['MIT']
+        vcsUrl = 'https://github.com/adambirse/cost-extractor.git'
+    }
+
+}
+
+publishing {
+    publications {
+        MyPublication(MavenPublication) {
+            from components.java
+            groupId 'com.birse'
+            artifactId 'cost-extractor'
+            version '1.0'
+        }
+    }
+}
+
 
 dependencies {
     testCompile group: 'junit', name: 'junit', version: '4.12'
