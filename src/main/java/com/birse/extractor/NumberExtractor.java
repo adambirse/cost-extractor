@@ -1,57 +1,58 @@
 package com.birse.extractor;
 
-import com.birse.extractor.exception.NumberExtractionException;
-import com.birse.extractor.exception.ParseException;
-import com.birse.extractor.exception.ScaleException;
-
 import java.math.BigDecimal;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
+import java.util.Optional;
+import java.util.stream.Collectors;
 
+//TODO extend support for different digit separators . ,
 
 public class NumberExtractor {
 
-    //TODO extend support for different digit separators . ,
 
-    public List<BigDecimal> extract(String text) throws NumberExtractionException {
+    public List<BigDecimal> extract(String text) {
 
-        List<BigDecimal> result = new ArrayList<>();
+        List<BigDecimal> filteredList = new ArrayList<>();
 
         if (text == null) {
-            throw new IllegalArgumentException("A value must be provided");
+            throw new IllegalArgumentException("A value must be provided.");
         }
 
         if (!text.isEmpty()) {
-            String[] words = tokenise(text);
-            for (String word : words) {
-                if (word.matches(".*\\d+.*")) {
-                    result.add(extractFrom(word));
-                }
-            }
+            String lines[] = text.split("\\r?\\n");
+
+            Arrays.stream(lines).forEach(line -> {
+                filteredList.addAll(processLine(line));
+            });
+
         }
-        return result;
+        return filteredList;
     }
+
+    List<BigDecimal> processLine(String line) {
+
+        String[] words = tokenise(line);
+
+        return Arrays.stream(words).filter(word -> word.matches(".*\\d+.*"))
+                .map(this::extractNumber)
+                .filter(Optional::isPresent)
+                .map(Optional::get)
+                .collect(Collectors.toList());
+    }
+
 
     private String[] tokenise(String text) {
         return text.split(" ");
     }
 
-    private BigDecimal extractFrom(String word) throws NumberExtractionException {
-
+    private Optional<BigDecimal> extractNumber(String word) {
         try {
             BigDecimal number = new BigDecimal(word.replaceAll("[^.0123456789]", ""));
-            return validate(word, number);
+            return number.scale() <= 2 ? Optional.of(number) : Optional.empty();
         } catch (NumberFormatException nfe) {
-            throw new ParseException(word);
-        }
-
-    }
-
-    private BigDecimal validate(String word, BigDecimal number) throws ScaleException {
-        if (number.scale() <= 2) {
-            return number;
-        } else {
-            throw new ScaleException(word);
+            return Optional.empty();
         }
     }
 }
