@@ -24,7 +24,7 @@ repositories {
     }
 }
 dependencies {
-    compile 'com.birse:cost-extractor:1.0'
+    compile 'com.birse:cost-extractor:2.0'
 }
 
 ```
